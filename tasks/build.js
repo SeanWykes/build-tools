@@ -14,7 +14,7 @@ var tools = require('./lib');
 
 gulp.task('build-index-and-dts', function () {
   var sources;
-
+  
   if ( paths.project )
   {
     var tsProject = ts.createProject( paths.project, { typescript: require('typescript'), target:'es6', emitDecoratorMetadata: false } );
@@ -38,13 +38,15 @@ gulp.task('build-index-and-dts', function () {
 
   var dts = tscOut.dts //.pipe(dbg())
     .pipe(through2.obj(function(file, enc, callback) {
-      file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8")));
+      file.contents = new Buffer( tools.extractImports(file.contents.toString("utf8")) );
       this.push(file);
       return callback();
     }))
     .pipe(concat(paths.packageName+'.d.ts'))
     .pipe(through2.obj(function(file, enc, callback) {
-      file.contents = new Buffer("declare module '" + paths.packageName + "' {\n\n" + tools.extractImports(file.contents.toString("utf8") + "}\n"));
+      var contents = "declare module '" + paths.packageName + "' {\n\n" + tools.extractImports(file.contents.toString("utf8") + "}\n");
+      contents = contents.replace(/export declare/g,"export");
+      file.contents = new Buffer(contents);
       this.push(file);
       return callback();
     }));
