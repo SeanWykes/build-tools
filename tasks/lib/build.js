@@ -1,6 +1,6 @@
 var relativeImports = /import\s({[0-9a-zA-Z\,\s]+}|\*\sas\s[0-9a-zA-Z_]+)\s*from\s['"]\..*;/g;
-var nonRelativeImports = /import\s*{?[a-zA-Z\*\,\s]+}?\s*from\s*'[a-zA-Z\-]+';\s*/g;
-var importGrouper = /import\s*{([a-zA-Z\,\s]+)}\s*from\s*'([a-zA-Z\-]+)'\s*;\s*/;
+var nonRelativeImports = /import\s*{?[0-9a-zA-Z\*\,\s]+}?\s*from\s*'[0-9a-zA-Z\-]+';\s*/g;
+var importGrouper = /import\s*{([0-9a-zA-Z\,\s]+)}\s*from\s*'([0-9a-zA-Z\-]+)'\s*;\s*/;
 
 exports.extractImports = function(content, importsToAdd){
   var matchesToKeep = content.match(nonRelativeImports);
