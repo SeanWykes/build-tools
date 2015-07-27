@@ -1,23 +1,46 @@
+var path = require('path');
 var gulp = require('gulp');
 var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
-var tscOptions = tscOptions || require('../typescript-options');
 var to5 = require('gulp-babel');
-var babelOptions = babelOptions || require('../babel-options');
 var assign = Object.assign || require('object.assign');
 var merge = require('merge2');
 var through2 = require('through2');
 var concat = require('gulp-concat');
 var insert = require('gulp-insert');
 var tools = require('./lib');
+var indent = require('gulp-indent');
 //var dbg = require('gulp-debug');
+
+var tscOptions = tscOptions || {};
+var babelOptions = babelOptions || {
+  filename: '',
+  filenameRelative: '',
+  modules: '',
+  sourceMap: true,
+  sourceMapName: '',
+  sourceRoot: '',
+  moduleRoot: path.resolve('src').replace(/\\/g, '/'),
+  moduleIds: false,
+  experimental: false,
+  comments: false,
+  compact: false,
+  code:true,
+  stage:2,
+  loose: "all",
+  optional: [
+    "es7.decorators",
+    "es7.classProperties"
+  ]
+};
+
 
 gulp.task('build-index-and-dts', function () {
   var sources;
   
   if ( paths.project )
   {
-    var tsProject = ts.createProject( paths.project, { typescript: require('typescript'), target:'es6', emitDecoratorMetadata: false } );
+    var tsProject = ts.createProject( paths.project, { typescript: require('typescript'), target:'es6', emitDecoratorMetadata: true, noLib: true } );
     tscOptions = tsProject;
     sources = tsProject.src();
   }
@@ -27,14 +50,18 @@ gulp.task('build-index-and-dts', function () {
   }
 
   var tscOut = sources.pipe(ts( tscOptions ));
+  var externalImports = [];
 
   var js = tscOut.js
     .pipe(through2.obj(function(file, enc, callback) {
-      file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8")));
+      file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8"), externalImports));
       this.push(file);
       return callback();
     }))
-    .pipe(concat('index.js'));
+    .pipe(concat('index.js'))
+    .pipe(insert.transform(function(contents) {
+      return tools.createImportBlock(externalImports) + contents;
+    }))
 
   var dts = tscOut.dts //.pipe(dbg())
     .pipe(through2.obj(function(file, enc, callback) {
@@ -43,8 +70,14 @@ gulp.task('build-index-and-dts', function () {
       return callback();
     }))
     .pipe(concat(paths.packageName+'.d.ts'))
+    .pipe(indent({amount:2}))
     .pipe(through2.obj(function(file, enc, callback) {
-      var contents = "declare module '" + paths.packageName + "' {\n\n" + tools.extractImports(file.contents.toString("utf8") + "}\n");
+      var contents = tools.extractImports(file.contents.toString("utf8")/*, externalImports*/ );
+      contents = "declare module '" + paths.packageName + '\n' 
+               + "'{\n" 
+               + tools.createImportBlock(externalImports) 
+               + contents
+               + "}\n";
       contents = contents.replace(/export declare/g,"export");
       file.contents = new Buffer(contents);
       this.push(file);
