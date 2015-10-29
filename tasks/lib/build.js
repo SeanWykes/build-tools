@@ -43,7 +43,7 @@ exports.createImportBlock = function(importsToAdd){
   });
 
   Object.keys(finalImports).forEach(function(key) {
-    importBlock += 'import {' + finalImports[key].join(',') + '} from \'' + key + '\';\n';
+    importBlock += '  import { ' + finalImports[key].join(', ') + ' } from \'' + key + '\';\n';
   });
 
   return importBlock + '\n';
