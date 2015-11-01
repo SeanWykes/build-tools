@@ -5,31 +5,32 @@ var karma = require('karma').server;
  * Run test once and exit
  */
 gulp.task('test', ['build-tests','build-index-and-dts' ], function (done) {
-    karma.start({
-        configFile: config.karma,
-        singleRun: true
-    }, function(e) {
-        done();
-    });
+  karma.start({
+    configFile: config.karma,
+    singleRun: true
+  }, function(e) {
+    done();
+  });
 });
 
 /**
  * Watch for file changes and re-run tests on each change
  */
 gulp.task('tdd', function (done) {
-    karma.start({
-        configFile: __dirname + '/../../../../karma.conf.js'
-    }, function(e) {
-        done();
-    });
+  karma.start({
+    configFile: config.karma
+  }, function(e) {
+      done();
+  });
 });
 
 /**
  * Run test once with code coverage and exit
+ * NOT WORKING!!
  */
 gulp.task('cover', function (done) {
   karma.start({
-    configFile: __dirname + '/../../../../karma.conf.js',
+    configFile: config.karma
     singleRun: true,
     reporters: ['coverage'],
     preprocessors: {

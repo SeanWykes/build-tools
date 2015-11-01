@@ -12,8 +12,6 @@ var tools = require('./lib');
 var indent = require('gulp-indent');
 var dbg = require('gulp-debug');
 
-var tscOptions = tscOptions || {};
-
 var babelOptions = babelOptions || {
   filename: '',
   filenameRelative: '',
@@ -35,23 +33,20 @@ var babelOptions = babelOptions || {
   ]
 };
 
+function transpileTS( project, sources, packageName )
+{
+  var tscOut;
 
-gulp.task('build-index-and-dts', function () {
-  "use strict";
-  var sources;
+  // Compile TS sources to ES6, using supplied options hash
+  // Force ES6 output, and use compiler specified in package.json
+//  options = assign( {}, options, { target:'es6', typescript: require('typescript') } );
 
-  if ( config.project )
-  {
-    var tsProject = ts.createProject( config.project, { typescript: require('typescript'), target:'es6' } );
-    tscOptions = tsProject;
-    sources = tsProject.src();
-  }
-  else {
-    tscOptions = assign({}, tscOptions, {target:'es6',typescript: require('typescript')});
-    sources = gulp.src( config.sources );
-  }
+  tscOut = sources.pipe( ts( project ) );
 
-  var tscOut = sources.pipe(ts( tscOptions ));
+  // Post-process transpiled TS and combine into package
+  // 1. Remove all import statements, extracting any external (non-relative) ones
+  // 2. Concatenate all processed TS into package,
+  //    and prefix with a single block of **unique** non-relative imports
   var externalImportsInJS = [];
 
   var js = tscOut.js
@@ -60,24 +55,27 @@ gulp.task('build-index-and-dts', function () {
       this.push(file);
       return callback();
     }))
-    .pipe(concat('index.js'))
+    .pipe(concat( packageName + '.js' ))
     .pipe(insert.transform(function(contents) {
       return tools.createImportBlock(externalImportsInJS) + contents;
     }));
 
-
+  // Post-process TS definitions ("exports") and combine
+  // 1. Remove all import statements, extracting any external (non-relative) ones
+  // 2. Transform all processed DTS into a single module/namespace,
+  //    in a single file prefixed with a single block of **unique** non-relative imports
   var externalImportsInDTS = [];
-  var dts = tscOut.dts //.pipe(dbg())
+  var dts = tscOut.dts
     .pipe(through2.obj(function(file, enc, callback) {
       file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8"), externalImportsInDTS));
       this.push(file);
       return callback();
     }))
-    .pipe(concat(config.packageName+'.d.ts'))
+    .pipe(concat( packageName+'.d.ts' ) )
     .pipe(indent({amount:2}))
     .pipe(through2.obj(function(file, enc, callback) {
       var contents = file.contents.toString("utf8");
-      contents = "declare module '" + config.packageName + "'\n"
+      contents = "declare module '" + packageName + "'\n"
                + "{\n"
                + tools.createImportBlock(externalImportsInDTS)
                + contents
@@ -88,53 +86,67 @@ gulp.task('build-index-and-dts', function () {
       return callback();
     }));
 
+  return {
+    js: js,
+    dts: dts
+  };
+}
+
+gulp.task('build-package', function () {
+  var project = ts.createProject( config.project, { target:'es6', typescript: require('typescript') } );
+  var sources = project.src();
+
+  var compiledTS = transpileTS( project, sources, config.packageName );
+
   return merge([
-    dts.pipe(gulp.dest(config.output))
+    compiledTS.dts.pipe(gulp.dest(config.output))
       .pipe(gulp.dest(config.output + 'es6'))
       .pipe(gulp.dest(config.output + 'commonjs'))
       .pipe(gulp.dest(config.output + 'amd')),
-    js.pipe(gulp.dest(config.output))
+    compiledTS.js.pipe(gulp.dest(config.output))
     ]);
 });
 
-gulp.task('build-es6', function () {
-  return gulp.src(config.output + 'index.js')
-    .pipe(gulp.dest(config.output + 'es6'));
+gulp.task('build-es6', [ 'build-package' ], function () {
+  return gulp.src( config.output + config.packageName + '.js' )
+    .pipe( concat( 'index.js' ) )
+    .pipe( gulp.dest(config.output + 'es6') );
 });
 
-gulp.task('build-commonjs', function () {
-  return gulp.src(config.output + 'index.js')
-    .pipe(to5(assign({}, babelOptions, {modules:'common'})))
-    .pipe(gulp.dest(config.output + 'commonjs'));
+gulp.task('build-commonjs', [ 'build-package' ], function () {
+  return gulp.src(config.output + config.packageName + '.js')
+    .pipe( to5( assign({}, babelOptions, {modules:'common'} ) ) )
+    .pipe( concat( 'index.js' ))
+    .pipe( gulp.dest(config.output + 'commonjs') );
 });
 
-gulp.task('build-amd', function () {
-  return gulp.src(config.output + 'index.js')
-    .pipe(to5(assign({}, babelOptions, {modules:'amd'})))
-    .pipe(gulp.dest(config.output + 'amd'));
+gulp.task('build-amd', [ 'build-package' ], function () {
+  return gulp.src( config.output + config.packageName + '.js' )
+    .pipe( to5( assign( {}, babelOptions, {modules:'amd'} ) ) )
+    .pipe( concat( 'index.js' ))
+    .pipe( gulp.dest(config.output + 'amd') );
 });
 
 gulp.task('build-tests', function () {
-//  process.stdout.write( __dirname );
   var tests = [  __dirname+'/../tslibs/*.ts', config.tslibs, config.tests ];
 
+  var options = { target:'es6',typescript: require('typescript') };
+  var project = ts.createProject( options );
   var sources = gulp.src( tests );
-//  sources.pipe(dbg());
 
-  tscOptions = assign({}, tscOptions, {target:'es6',typescript: require('typescript')});
+  var compiledTS = transpileTS( project, sources, config.packageName + '.tests' );
 
-  var tscOut = sources.pipe(ts( tscOptions ));
-
-  return tscOut.js
-      .pipe(concat(config.packageName+'.tests'/*+config.packageVersion*/+'.js'))
+  return compiledTS.js
+//      .pipe(concat(config.packageName+'.tests'/*+config.packageVersion*/+'.js'))
       .pipe(gulp.dest(config.output))
 });
 
 gulp.task('build', function(callback) {
   return runSequence(
     'clean',
-    'build-index-and-dts',
-    ['build-es6', 'build-commonjs', 'build-amd'],
+    //'build-package',
+    'build-es6', 'build-commonjs', 'build-amd',
+    'build-tests',
     callback
   );
 });
