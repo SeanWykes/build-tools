@@ -1,6 +1,6 @@
 {
   "name": "cgfx-build-tools",
-  "version": "0.1.9",
+  "version": "0.1.12",
   "main": "index.js",
   "dependencies": {
     "del": "^1.2.0",
@@ -13,10 +13,12 @@
     "gulp-typescript": "^2.7.8",
     "jasmine-core": "^2.3.4",
     "karma": "^0.13.14",
+    "karma-jspm": "^2.0.2",
     "karma-babel-preprocessor": "^5.2.2",
+    "karma-typescript-preprocessor": "0.0.20",
     "karma-chrome-launcher": "^0.2.1",
-    "karma-jasmine": "^0.3.6",
-    "karma-jspm": "^2.0.1",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "phantomjs": "^1.9.18",
     "merge2": "^0.3.6",
     "object.assign": "^3.0.1",
     "require-dir": "^0.3.0",
@@ -48,11 +50,5 @@
   ],
   "directories": {},
   "_resolved": "https://registry.npmjs.org/cgfx-build-tools/-/cgfx-build-tools-0.1.8.tgz",
-  "readme": "ERROR: No README data found!",
-  "devDependencies": {
-    "karma": "^0.13.14",
-    "karma-phantomjs-launcher": "^0.2.1",
-    "karma-typescript-preprocessor": "0.0.20",
-    "phantomjs": "^1.9.18"
-  }
+  "readme": "ERROR: No README data found!"
 }
