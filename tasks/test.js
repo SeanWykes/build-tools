@@ -4,7 +4,7 @@ var karma = require('karma').server;
 /**
  * Run test once and exit
  */
-gulp.task('test', ['build-tests','build-index-and-dts' ], function (done) {
+gulp.task('test', [ 'build-package', 'build-tests' ], function (done) {
   karma.start({
     configFile: config.karma,
     singleRun: true
@@ -15,8 +15,9 @@ gulp.task('test', ['build-tests','build-index-and-dts' ], function (done) {
 
 /**
  * Watch for file changes and re-run tests on each change
+ * NOT WORKING!!
  */
-gulp.task('tdd', function (done) {
+gulp.task('tdd', [ 'build-package', 'build-tests' ], function (done) {
   karma.start({
     configFile: config.karma
   }, function(e) {
@@ -30,7 +31,7 @@ gulp.task('tdd', function (done) {
  */
 gulp.task('cover', function (done) {
   karma.start({
-    configFile: config.karma
+    configFile: config.karma,
     singleRun: true,
     reporters: ['coverage'],
     preprocessors: {
