@@ -1,28 +1,36 @@
 var gulp = require('gulp');
-var karma = require('karma').server;
+var karma = require('karma').Server;
+var ts = require('gulp-typescript');
+var fn = require('gulp-filenames');
 
 /**
  * Run test once and exit
  */
 gulp.task('test', [ 'build-package', 'build-tests' ], function (done) {
-  karma.start({
+  new karma({
     configFile: config.karma,
     singleRun: true
   }, function(e) {
     done();
-  });
+  }).start();
 });
 
 /**
  * Watch for file changes and re-run tests on each change
- * NOT WORKING!!
  */
 gulp.task('tdd', [ 'build-package', 'build-tests' ], function (done) {
-  karma.start({
-    configFile: config.karma
+  var project = ts.createProject( config.project );
+  project.src()
+    .pipe(fn());
+
+  gulp.watch(fn.get(), ['build-package'] );
+  gulp.watch(config.tests, ['build-tests'] );
+  new karma({
+    configFile: config.karma,
+    singleRun: false
   }, function(e) {
-      done();
-  });
+    done();
+  }).start();
 });
 
 /**
@@ -30,7 +38,7 @@ gulp.task('tdd', [ 'build-package', 'build-tests' ], function (done) {
  * NOT WORKING!!
  */
 gulp.task('cover', function (done) {
-  karma.start({
+  new karma({
     configFile: config.karma,
     singleRun: true,
     reporters: ['coverage'],
@@ -44,5 +52,5 @@ gulp.task('cover', function (done) {
     }
   }, function (e) {
     done();
-  });
+  }).start();
 });

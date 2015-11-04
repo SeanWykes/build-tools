@@ -1,28 +1,29 @@
 {
   "name": "cgfx-build-tools",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "main": "index.js",
   "dependencies": {
     "del": "^1.2.0",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.6.0",
     "gulp-debug": "^2.0.1",
+    "gulp-filenames": "^2.0.0",
     "gulp-indent": "^1.0.0",
     "gulp-insert": "^0.4.0",
     "gulp-rename": "^1.2.2",
     "gulp-typescript": "^2.7.8",
     "jasmine-core": "^2.3.4",
     "karma": "^0.13.14",
-    "karma-jspm": "^2.0.2",
     "karma-chrome-launcher": "^0.2.1",
+    "karma-jspm": "^2.0.2",
     "karma-phantomjs-launcher": "^0.2.1",
-    "phantomjs": "^1.9.18",
     "merge2": "^0.3.6",
     "object.assign": "^3.0.1",
+    "phantomjs": "^1.9.18",
     "require-dir": "^0.3.0",
     "run-sequence": "^1.1.1",
     "through2": "^2.0.0",
-    "typescript": "^1.5.3",
+    "typescript": "^1.6.0",
     "vinyl-paths": "^1.0.0"
   },
   "gitHead": "afa0f27fd6ba5a2e906905b4e57ef2388a469530",
@@ -49,6 +50,5 @@
   "directories": {},
   "_resolved": "https://registry.npmjs.org/cgfx-build-tools/-/cgfx-build-tools-0.1.8.tgz",
   "readme": "ERROR: No README data found!",
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
