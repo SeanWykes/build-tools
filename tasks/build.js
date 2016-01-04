@@ -1,5 +1,5 @@
-var path = require('path');
 var gulp = require('gulp');
+var path = require('path');
 var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
 var to5 = require('gulp-babel');
@@ -7,10 +7,18 @@ var assign = Object.assign || require('object.assign');
 var merge = require('merge2');
 var through2 = require('through2');
 var concat = require('gulp-concat');
+var dedupe = require('gulp-dedupe');
+var ignore = require('gulp-ignore');
 var insert = require('gulp-insert');
 var tools = require('./lib');
 var indent = require('gulp-indent');
 var dbg = require('gulp-debug');
+var es = require('event-stream');
+
+function ensureArray( item )
+{
+  return ( item instanceof Array ) ? item : [ item ];
+}
 
 var babelOptions = babelOptions || {
   filename: '',
@@ -33,13 +41,28 @@ var babelOptions = babelOptions || {
   ]
 };
 
-function transpileTS( project, sources, packageName )
+function transpileTS( project, sources, typings, packageName )
 {
   var tscOut;
 
   // Compile TS sources to ES6, using supplied options hash
   // Force ES6 output, and use compiler specified in package.json
-//  options = assign( {}, options, { target:'es6', typescript: require('typescript') } );
+  //  options = assign( {}, options, { target:'es6', typescript: require('typescript') } );
+
+  // Inject any additional 'typings' into source list
+  if ( typings )
+  {
+    var s = gulp.src( typings );
+
+    // Exclude any .d.ts in the source listing
+    sources = sources.pipe( ignore.exclude('*.d.ts'));
+
+    // Inline typings into src
+    sources = es.concat( sources, s )
+      .pipe( dedupe() );
+  }
+
+//  sources.pipe( dbg() );
 
   tscOut = sources.pipe( ts( project ) );
 
@@ -93,59 +116,73 @@ function transpileTS( project, sources, packageName )
 }
 
 gulp.task('build-package', function () {
-  var project = ts.createProject( config.project, { target:'es6', typescript: require('typescript') } );
+  var project = ts.createProject( config.project,
+    { target:'es6',
+    typescript: require('typescript'),
+    noExternalResolve: true }
+  );
+
   var sources = project.src();
 
-  var compiledTS = transpileTS( project, sources, config.packageName );
+  var compiledTS = transpileTS( project, sources, ensureArray( config.typings ), config.packageName );
 
   return merge([
     compiledTS.dts.pipe(gulp.dest(config.output))
-      .pipe(gulp.dest(config.output + 'es6'))
-      .pipe(gulp.dest(config.output + 'commonjs'))
+      .pipe(gulp.dest(config.output + 'cjs'))
       .pipe(gulp.dest(config.output + 'amd')),
     compiledTS.js.pipe(gulp.dest(config.output))
-    ]);
+  ]);
 });
 
 gulp.task('build-es6', [ 'build-package' ], function () {
   return gulp.src( config.output + config.packageName + '.js' )
-    .pipe( concat( 'index.js' ) )
     .pipe( gulp.dest(config.output + 'es6') );
 });
 
-gulp.task('build-commonjs', [ 'build-package' ], function () {
+gulp.task('build-cjs', [ 'build-package' ], function () {
   return gulp.src(config.output + config.packageName + '.js')
     .pipe( to5( assign({}, babelOptions, {modules:'common'} ) ) )
-    .pipe( concat( 'index.js' ))
-    .pipe( gulp.dest(config.output + 'commonjs') );
+    //.pipe( concat( config.packageName + '.js' ))
+    .pipe( gulp.dest(config.output + 'cjs') );
+});
+
+gulp.task('build-system', [ 'build-package' ], function () {
+  return gulp.src(config.output + config.packageName + '.js')
+    .pipe(to5(assign({}, babelOptions, {modules:'system'})))
+    .pipe(gulp.dest(config.output + 'system'));
 });
 
 gulp.task('build-amd', [ 'build-package' ], function () {
   return gulp.src( config.output + config.packageName + '.js' )
     .pipe( to5( assign( {}, babelOptions, {modules:'amd'} ) ) )
-    .pipe( concat( 'index.js' ))
     .pipe( gulp.dest(config.output + 'amd') );
 });
 
 gulp.task('build-tests', function () {
-  var tests = [  __dirname+'/../tslibs/*.ts', config.tslibs, config.tests ];
+  var tests = ensureArray( config.tests );
 
-  var options = { target:'es6',typescript: require('typescript') };
+  var typings = ensureArray( config.typings );
+
+  typings.push( __dirname+'/../typings/*.ts' );
+
+  var options = { target:'es6',typescript: require('typescript'), experimentalDecorators: true, emitDecoratorMetadata: true };
   var project = ts.createProject( options );
   var sources = gulp.src( tests );
 
-  var compiledTS = transpileTS( project, sources, config.packageName + '.tests' );
+  var compiledTS = transpileTS( project, sources, typings, config.packageName + '.tests' );
 
   return compiledTS.js
-//      .pipe(concat(config.packageName+'.tests'/*+config.packageVersion*/+'.js'))
-      .pipe(gulp.dest(config.output))
+    .pipe(gulp.dest(config.output))
+    .pipe(to5(assign({}, babelOptions, {modules:'system'})))
+    .pipe(gulp.dest(config.output + 'system'));
 });
 
 gulp.task('build', function(callback) {
   return runSequence(
     'clean',
     //'build-package',
-    'build-es6', 'build-commonjs', 'build-amd',
+    //'build-es6', 'build-commonjs',
+    'build-amd', 'build-cjs', 'build-system',
     'build-tests',
     callback
   );
