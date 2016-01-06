@@ -26,6 +26,7 @@
     "phantomjs": "^1.9.18",
     "require-dir": "^0.3.0",
     "run-sequence": "^1.1.1",
+    "systemjs": "^0.19.11",
     "through2": "^2.0.0",
     "typescript": "^1.7.0",
     "vinyl-paths": "^1.0.0"
@@ -54,5 +55,6 @@
   "directories": {},
   "_resolved": "https://registry.npmjs.org/cgfx-build-tools/-/cgfx-build-tools-0.1.8.tgz",
   "readme": "ERROR: No README data found!",
-  "devDependencies": {}
+  "devDependencies": {
+  }
 }
