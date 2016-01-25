@@ -15,6 +15,8 @@ var indent = require('gulp-indent');
 var dbg = require('gulp-debug');
 var es = require('event-stream');
 
+var config = tools.options;
+
 function ensureArray( item )
 {
   return ( item instanceof Array ) ? item : [ item ];
