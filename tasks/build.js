@@ -1,7 +1,8 @@
 var gulp = require('gulp');
 var tools = require('./lib');
-
 var path = require('path');
+var changed = require('gulp-changed');
+var sourcemaps = require('gulp-sourcemaps');
 var ts = require('gulp-typescript');
 var runSequence = require('run-sequence');
 var to5 = require('gulp-babel');
@@ -40,7 +41,9 @@ gulp.task('build-package', function () {
     noExternalResolve: true }
   );
 
-  var sources = project.src();
+  var sources = project.src()
+    .pipe(sourcemaps.init({loadMaps: true}))    
+    .pipe(changed(config.output, {extension: '.js'}));
 
   var compiledTS = tools.transpileTS( project, sources, tools.ensureArray( config.typings ), config.packageName );
 
@@ -48,7 +51,8 @@ gulp.task('build-package', function () {
     compiledTS.dts.pipe(gulp.dest(config.output))
       .pipe(gulp.dest(config.output + 'cjs'))
       .pipe(gulp.dest(config.output + 'amd')),
-    compiledTS.js.pipe(gulp.dest(config.output))
+    compiledTS.js.pipe(sourcemaps.write({includeContent: true}))
+      .pipe(gulp.dest(config.output))
   ]);
 });
 
@@ -90,10 +94,25 @@ gulp.task('build-tests', function () {
   var compiledTS = tools.transpileTS( project, sources, typings, config.packageName + '.tests' );
 
   return compiledTS.js
-    .pipe(gulp.dest(config.output))
+    .pipe(gulp.dest(tools.options.output))
     .pipe(to5(assign({}, babelOptions, {modules:'system'})))
-    .pipe(gulp.dest(config.output + 'system'));
+    .pipe(gulp.dest(path.join(tools.options.output, 'system')));
 });
+
+// copies changed html files to the output directory
+gulp.task('build-html', function() {
+  return gulp.src(tools.options.html)
+    .pipe(changed(tools.options.output, {extension: '.html'}))
+    .pipe(gulp.dest(tools.options.output));
+});
+
+// copies changed css files to the output directory
+gulp.task('build-css', function() {
+  return gulp.src(tools.options.css)
+    .pipe(changed(tools.options.output, {extension: '.css'}))
+    .pipe(gulp.dest(tools.options.output));
+});
+
 
 gulp.task('build', function(callback) {
   return runSequence(
