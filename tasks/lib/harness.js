@@ -15,7 +15,7 @@ extend( global, jasmineInterface );
 
 env.addReporter(new TestsReporter({}));
 
-module.exports.performTests = function( specs, configjs )
+module.exports.performTests = function performTests( specs, configjs )
 {
   console.log( 'spec:' + specs );
 

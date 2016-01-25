@@ -1,6 +1,6 @@
 {
   "name": "cgfx-build-tools",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "index.js",
   "dependencies": {
     "del": "^1.2.0",
@@ -31,30 +31,8 @@
     "typescript": "^1.7.0",
     "vinyl-paths": "^1.0.0"
   },
-  "gitHead": "afa0f27fd6ba5a2e906905b4e57ef2388a469530",
-  "_id": "cgfx-build-tools@0.1.8",
   "scripts": {},
-  "_shasum": "6bfcc49bdcbc87a8c75a4bd5bcf19cc0c983fc6d",
-  "_from": "cgfx-build-tools@0.1.8",
-  "_npmVersion": "2.11.3",
-  "_nodeVersion": "0.12.2",
-  "_npmUser": {
-    "name": "cryptographics",
-    "email": "sean.public@nascent.com.br"
-  },
-  "dist": {
-    "shasum": "6bfcc49bdcbc87a8c75a4bd5bcf19cc0c983fc6d",
-    "tarball": "http://registry.npmjs.org/cgfx-build-tools/-/cgfx-build-tools-0.1.8.tgz"
-  },
-  "maintainers": [
-    {
-      "name": "cryptographics",
-      "email": "sean.public@nascent.com.br"
-    }
-  ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/cgfx-build-tools/-/cgfx-build-tools-0.1.8.tgz",
-  "readme": "ERROR: No README data found!",
   "devDependencies": {
   }
 }
