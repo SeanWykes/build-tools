@@ -2,10 +2,12 @@
   "name": "cgfx-build-tools",
   "version": "0.3.3",
   "main": "index.js",
+  "peerDependencies": {
+    "gulp": "*"
+  },
   "dependencies": {
     "del": "^2.2.2",
     "event-stream": "^3.3.4",
-    "gulp-babel": "^6.1.2",
     "gulp-changed": "^1.1.0",
     "gulp-concat": "^2.6.0",
     "gulp-debug": "^2.0.1",

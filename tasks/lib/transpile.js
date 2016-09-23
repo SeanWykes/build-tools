@@ -33,7 +33,7 @@ module.exports.transpileTS = function transpileTS( project, sources, typings, pa
 
 //  sources.pipe( dbg() );
 
-  tscOut = sources.pipe( ts( project ) );
+  tscOut = sources.pipe( project() );
 
   // Post-process transpiled TS and combine into package
   // 1. Remove all import statements, extracting any external (non-relative) ones
